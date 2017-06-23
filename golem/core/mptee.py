@@ -6,9 +6,11 @@ import sys
 Will will terminate when subproc will stop.
 """
 class MPTee(object):
-    def __init__(self, subproc, filename):
+    def __init__(self, subproc, filename, capture_stderr=False):
         """subproc  - should be created using Popen(..., stdout=subprocess.PIPE)
+           capture_stderr - if set to True, capture strerr instead
         """
+        self.capture_stderr = capture_stderr
         self.filename = filename
         self.subproc = subproc
         self.p = multiprocessing.Process(target=self._run, args=())
@@ -20,12 +22,18 @@ class MPTee(object):
         self.p.start()
 
     def _run(self):
+        if self.capture_stderr:
+            input = self.subproc.stderr
+            output = sys.stderr
+        else
+            input = self.subproc.stdout
+            output = sys.stdout
         with open(self.filename, 'a', 1) as f:
             while True:
-                out = self.subproc.stdout.read(1)
-                if out == '' and self.subproc.poll() is not None:
+                line = input.read(1)
+                if line == '' and self.subproc.poll() is not None:
                     break
-                if out != '':
-                    sys.stdout.write(out)
-                    sys.stdout.flush()
-                    f.write(out)
+                if line != '':
+                    output.write(line)
+                    output.flush()
+                    f.write(line)

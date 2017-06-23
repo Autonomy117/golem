@@ -140,11 +140,15 @@ class NodeProcess(object):
 
         log.info("Starting Ethereum node: `{}`".format(" ".join(args)))
 
-        # because close_fds=True does not work on Windows if stdout is redirected
-        close_fds = not is_windows()
-        self.__ps = subprocess.Popen(args, stdout=subprocess.PIPE, close_fds=close_fds)
-        mpt = MPTee(self.__ps, logfilename)
-        mpt.start()
+        # close_fds=True does not work on Windows if stderr is redirected.
+        # Disabling close_fds breaks things, so don't record geth logs instead
+        stderr = None
+        if not is_windows():
+            stderr = subprocess.PIPE
+        self.__ps = subprocess.Popen(args, stderr=stderr, close_fds=True)
+        if not is_windows():
+            mpt = MPTee(self.__ps, logfilename, capture_stderr=True)
+            mpt.start()
         atexit.register(lambda: self.stop())
 
         if is_windows():
