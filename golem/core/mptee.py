@@ -20,12 +20,10 @@ class MPTee(object):
         self.p.start()
 
     def _run(self):
-        self.running = True
         with open(self.filename, 'a', 1) as f:
-            while self.running:
+            while True:
                 out = self.subproc.stdout.read(1)
                 if out == '' and self.subproc.poll() is not None:
-                    self.running = False
                     break
                 if out != '':
                     sys.stdout.write(out)
