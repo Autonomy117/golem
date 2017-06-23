@@ -140,7 +140,9 @@ class NodeProcess(object):
 
         log.info("Starting Ethereum node: `{}`".format(" ".join(args)))
 
-        self.__ps = subprocess.Popen(args, stdout=subprocess.PIPE, close_fds=True)
+        # because close_fds=True does not work on Windows if stdout is redirected
+        close_fds = not is_windows()
+        self.__ps = subprocess.Popen(args, stdout=subprocess.PIPE, close_fds=close_fds)
         mpt = MPTee(self.__ps, logfilename)
         mpt.start()
         atexit.register(lambda: self.stop())
